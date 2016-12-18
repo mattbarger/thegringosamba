@@ -2,8 +2,26 @@ EOY <- EUR %>% group_by(Country, Season) %>% filter(Mct == max(Mct))
 EOY <- left_join(EOY, rel[,c("Season","Team","relegated")], by = c("Season","Team"))
 EOY$Country <- factor(EOY$Country, levels = c("England", "Germany","Italy","Spain","France","Holland","Portugal","Turkey","Belgium","Scotland"))
 EOY16 <- EOY %>% filter(Season == 2016)
+EOY16 <- EOY16 %>% mutate(relegated = ifelse(Country == "Scotland" & RANK.S == max(RANK.S) |
+                                               Country == "Belgium" & RANK.S == max(RANK.S), 1,
+                                             ifelse(Country == "Germany" & RANK.S >= max(RANK.S) - 1 |
+                                                      Country == "Holland" & RANK.S >= max(RANK.S) - 1 |
+                                                      Country == "Portugal" & RANK.S >= max(RANK.S) - 1, 1,
+                                                    ifelse(Country == "England" & RANK.S >= max(RANK.S) - 2 |
+                                                             Country == "Italy" & RANK.S >= max(RANK.S) - 2 |
+                                                             Country == "Spain" & RANK.S >= max(RANK.S) - 2 |
+                                                             Country == "France" & RANK.S >= max(RANK.S) - 2 |
+                                                             Country == "Turkey" & RANK.S >= max(RANK.S) - 2, 1,0)
+                                             )
+)
+)
+EOY <- bind_rows(EOY, EOY16)
+todelete <- which(is.na(EOY$relegated))
+EOY <- EOY[-todelete,]
+
 EOYPL <- EOY %>% filter(Country == "England")
-posn.j <- position_jitter(width = 0.3)
+EOYPL12 <- EOYPL %>% filter(Season == 2012)
+posn.j <- position_jitter(width = 0.2)
 
 ggplot(EOYPL, aes(x = Season, y = elo.n)) +
   geom_point(color = 'navyblue', 
